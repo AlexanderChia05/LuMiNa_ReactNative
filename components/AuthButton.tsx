@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, useColorScheme } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, useColorScheme, StyleProp } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { ArrowRight } from 'lucide-react-native';
 
@@ -7,7 +7,7 @@ interface AuthButtonProps {
     text: string;
     onPress: () => void;
     loading?: boolean;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
     textStyle?: TextStyle;
     showArrow?: boolean;
 }

@@ -169,8 +169,8 @@ export default function RewardsScreen() {
                 >
                     <View style={styles.voucherBtnContent}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <Ticket size={18} color={Colors.light.rose500} />
-                            <Text style={styles.voucherBtnText}>My Vouchers</Text>
+                            <Ticket size={18} color={colors.rose500} />
+                            <Text style={[styles.voucherBtnText, { color: colors.rose500 }]}>My Vouchers</Text>
                         </View>
                         <View style={styles.badge}>
                             <Text style={styles.badgeText}>{myVouchers.length} Active</Text>
@@ -188,7 +188,7 @@ export default function RewardsScreen() {
                         return (
                             <Card key={r.id} style={[styles.rewardCard, { backgroundColor: isDark ? colors.bgCard : '#ffffff' }]} noPadding>
                                 <View style={styles.rewardImage}>
-                                    <Text style={styles.rewardImageText}>{mainText}</Text>
+                                    <Text style={[styles.rewardImageText, { color: colors.rose500 }]}>{mainText}</Text>
                                     <Text style={styles.rewardImageType}>VOUCHER</Text>
                                     <View style={styles.costBadge}>
                                         <Text style={styles.costText}>{r.cost} pts</Text>
@@ -229,13 +229,13 @@ export default function RewardsScreen() {
                             myVouchers.map((v, i) => (
                                 <View key={i} style={[styles.voucherItem, { backgroundColor: isDark ? colors.bgCard : '#fff1f2', borderColor: isDark ? colors.border : '#ffe4e6' }]}>
                                     <View style={styles.voucherRow}>
-                                        <Text style={[styles.voucherTitle, { color: isDark ? Colors.light.rose500 : '#be123c' }]}>{v.title}</Text>
+                                        <Text style={[styles.voucherTitle, { color: colors.rose500 }]}>{v.title}</Text>
                                         <Text style={styles.activeTag}>ACTIVE</Text>
                                     </View>
                                     <Text style={[styles.voucherDesc, { color: isDark ? colors.text600 : '#4b5563' }]}>{v.description}</Text>
                                     <View style={styles.voucherMeta}>
-                                        <Clock size={10} color={Colors.light.rose500} />
-                                        <Text style={styles.expiryText}>Expires: {v.expiryDate}</Text>
+                                        <Clock size={10} color={colors.rose500} />
+                                        <Text style={[styles.expiryText, { color: colors.rose500 }]}>Expires: {v.expiryDate}</Text>
                                     </View>
                                     <View style={[styles.serialRow, { borderTopColor: isDark ? colors.border : '#fecdd3' }]}>
                                         <Text style={styles.serialLabel}>SERIAL</Text>
@@ -262,7 +262,7 @@ export default function RewardsScreen() {
                             <View key={i} style={[styles.historyItem, { borderBottomColor: isDark ? colors.border : '#f3f4f6' }]}>
                                 <View style={styles.historyLeft}>
                                     <View style={[styles.historyIcon, h.type === 'earn' ? styles.bgGreen : styles.bgRose]}>
-                                        {h.type === 'earn' ? <TrendingUp size={14} color="green" /> : <Gift size={14} color={Colors.light.rose500} />}
+                                        {h.type === 'earn' ? <TrendingUp size={14} color="green" /> : <Gift size={14} color={colors.rose500} />}
                                     </View>
                                     <View>
                                         <Text style={[styles.historyTitle, { color: isDark ? colors.text900 : '#111827' }]}>{h.title}</Text>
@@ -286,7 +286,7 @@ export default function RewardsScreen() {
                         <Text style={[styles.successTitle, { color: isDark ? colors.text900 : '#111827' }]}>Reward Claimed!</Text>
                         <Text style={styles.successSub}>You have successfully redeemed:</Text>
                         <View style={[styles.redeemedItem, { backgroundColor: isDark ? colors.bgSecondary : '#f9fafb', borderColor: isDark ? colors.border : '#f3f4f6' }]}>
-                            <Text style={styles.redeemTitle}>{selectedReward?.title}</Text>
+                            <Text style={[styles.redeemTitle, { color: colors.rose500 }]}>{selectedReward?.title}</Text>
                             <Text style={styles.redeemDesc}>{selectedReward?.description}</Text>
                         </View>
                         <Button onPress={() => setRedeemModalOpen(false)} style={{ width: '100%' }}>Done</Button>

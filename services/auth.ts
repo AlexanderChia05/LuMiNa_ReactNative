@@ -14,7 +14,7 @@ export const AuthService = {
           name,
           phone,
           pin, // Pass PIN to metadata for trigger
-          role 
+          role
         }
       }
     });
@@ -97,6 +97,14 @@ export const AuthService = {
       .select('*')
       .eq('id', userId)
       .single();
+    return { data, error };
+  },
+
+  // Update User Password (for authenticated user or after recovery OTP verify)
+  updateUserPassword: async (password: string) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password
+    });
     return { data, error };
   }
 };

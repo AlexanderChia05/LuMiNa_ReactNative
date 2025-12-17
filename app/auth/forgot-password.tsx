@@ -73,7 +73,7 @@ export default function ForgotPasswordScreen() {
                         />
 
                         <AuthButton
-                            text="Send Code"
+                            text="Send Reset Code"
                             onPress={handleReset}
                             loading={loading}
                             style={styles.sendBtn}

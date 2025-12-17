@@ -51,9 +51,13 @@ export default function VerificationScreen() {
             }
 
             if (data.session) {
-                Alert.alert('Success', 'Verified successfully!', [
-                    { text: 'Continue', onPress: () => router.replace('/client/home') }
-                ]);
+                if (email && !router.canGoBack()) {
+                    // Start of recovery session, replace stack
+                    router.replace('/auth/reset-password');
+                } else {
+                    // For parity with standard flow
+                    router.replace('/auth/reset-password');
+                }
             }
         } catch (err: any) {
             Alert.alert('Verification Failed', err.message);

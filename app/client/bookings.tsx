@@ -50,7 +50,7 @@ const CustomCalendar = ({ selectedDate, onSelectDate, isDark, colors }: any) => 
                     key={i}
                     style={[
                         styles.calendarDay,
-                        isSelected && { backgroundColor: Colors.light.rose500 },
+                        isSelected && { backgroundColor: colors.rose500 },
                         isPast && { opacity: 0.3 }
                     ]}
                     disabled={isPast}
@@ -269,7 +269,7 @@ export default function MyBookings() {
                 {/* Card Header: Date & Status */}
                 <View style={[styles.cardHeader, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fdf2f4', borderBottomColor: isDark ? colors.border : '#fce7eb' }]}>
                     <View style={styles.dateRow}>
-                        <Calendar size={16} color={Colors.light.rose500} />
+                        <Calendar size={16} color={colors.rose500} />
                         <Text style={[styles.dateText, { color: isDark ? colors.text900 : '#1f2937' }]}>{formatDate(appt.date)}</Text>
                     </View>
                     <Badge status={appt.status} />
@@ -279,11 +279,11 @@ export default function MyBookings() {
                 <View style={styles.cardBody}>
                     {/* Service & Ref ID */}
                     <View style={styles.serviceRow}>
-                        <Text style={[styles.serviceName, { color: isDark ? colors.text900 : Colors.light.rose700 }]}>{service?.name || 'Unknown Service'}</Text>
+                        <Text style={[styles.serviceName, { color: isDark ? colors.text900 : colors.rose700 }]}>{service?.name || 'Unknown Service'}</Text>
                         <View style={{ alignItems: 'flex-end' }}>
                             <Text style={styles.refLabel}>REF ID</Text>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                                <Hash size={12} color={Colors.light.rose400} />
+                                <Hash size={12} color={colors.rose400} />
                                 <Text style={[styles.refValue, { color: isDark ? colors.text900 : '#111827' }]}>{appt.id}</Text>
                             </View>
                         </View>
@@ -405,7 +405,7 @@ export default function MyBookings() {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={Colors.light.rose500} />
+                    <ActivityIndicator size="large" color={colors.rose500} />
                 </View>
             </SafeAreaView>
         );
@@ -464,7 +464,7 @@ export default function MyBookings() {
                             <Text style={[styles.label, { color: isDark ? colors.text600 : '#374151', marginTop: 16 }]}>Select Staff</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                                 {staffList.map(s => (
-                                    <TouchableOpacity key={s.id} style={[styles.chip, newStaffId === s.id && styles.chipActive]} onPress={() => { setNewStaffId(s.id); checkAvailability(newDate, s.id); }}>
+                                    <TouchableOpacity key={s.id} style={[styles.chip, newStaffId === s.id && { backgroundColor: colors.rose500 }]} onPress={() => { setNewStaffId(s.id); checkAvailability(newDate, s.id); }}>
                                         <Text style={[styles.chipText, newStaffId === s.id && styles.chipTextActive]}>{s.name}</Text>
                                     </TouchableOpacity>
                                 ))}
@@ -472,7 +472,7 @@ export default function MyBookings() {
                             <Text style={[styles.label, { color: isDark ? colors.text600 : '#374151', marginTop: 16 }]}>Available Slots</Text>
                             <View style={styles.slotsGrid}>
                                 {availableSlots.map(slot => (
-                                    <TouchableOpacity key={slot} style={[styles.slot, selectedSlot === slot && { backgroundColor: Colors.light.rose500, borderColor: Colors.light.rose500 }]} onPress={() => setSelectedSlot(slot)}>
+                                    <TouchableOpacity key={slot} style={[styles.slot, selectedSlot === slot && { backgroundColor: colors.rose500, borderColor: colors.rose500 }]} onPress={() => setSelectedSlot(slot)}>
                                         <Text style={[styles.slotText, selectedSlot === slot && { color: '#fff' }]}>{slot}</Text>
                                     </TouchableOpacity>
                                 ))}

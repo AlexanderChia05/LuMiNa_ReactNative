@@ -17,7 +17,16 @@ export const ReceiptCard = ({ receipt }: ReceiptCardProps) => {
     const getFormattedDateTime = (dateStr?: string) => {
         if (!dateStr) return 'N/A';
         try {
-            const d = new Date(dateStr);
+            let d = new Date(dateStr);
+
+            // Handle SQL timestamps used by React DOM (e.g. "2023-12-17 14:00:00")
+            if (isNaN(d.getTime())) {
+                d = new Date(dateStr.replace(' ', 'T'));
+            }
+
+            // If still invalid, return raw string
+            if (isNaN(d.getTime())) return dateStr;
+
             const day = d.getDate().toString().padStart(2, '0');
             const month = (d.getMonth() + 1).toString().padStart(2, '0');
             const year = d.getFullYear();

@@ -118,7 +118,7 @@ export default function BookAppointment() {
             setPayError('');
 
             // Show tab bar on services screen - reset to initial state
-            navigation.getParent()?.setOptions({
+            navigation.setOptions({
                 tabBarStyle: {
                     position: 'absolute',
                     bottom: 25,
@@ -132,7 +132,7 @@ export default function BookAppointment() {
 
             // Return cleanup function to restore tab bar when leaving
             return () => {
-                navigation.getParent()?.setOptions({
+                navigation.setOptions({
                     tabBarStyle: {
                         position: 'absolute',
                         bottom: 25,
@@ -151,7 +151,8 @@ export default function BookAppointment() {
     useEffect(() => {
         if (bookingStep !== 'services') {
             // Hide tab bar by moving it off screen
-            navigation.getParent()?.setOptions({
+            // Hide tab bar by moving it off screen
+            navigation.setOptions({
                 tabBarStyle: {
                     position: 'absolute',
                     bottom: -100,
@@ -160,7 +161,8 @@ export default function BookAppointment() {
             });
         } else {
             // Show tab bar with full styling
-            navigation.getParent()?.setOptions({
+            // Show tab bar with full styling
+            navigation.setOptions({
                 tabBarStyle: {
                     position: 'absolute',
                     bottom: 25,

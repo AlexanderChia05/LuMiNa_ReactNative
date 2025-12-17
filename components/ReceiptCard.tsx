@@ -18,18 +18,14 @@ export const ReceiptCard = ({ receipt }: ReceiptCardProps) => {
         if (!dateStr) return 'N/A';
         try {
             const d = new Date(dateStr);
-            const day = d.getDate();
-            const month = d.getMonth() + 1;
+            const day = d.getDate().toString().padStart(2, '0');
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
             const year = d.getFullYear();
 
-            let hours = d.getHours();
-            const minutes = d.getMinutes();
-            const ampm = hours >= 12 ? 'pm' : 'am';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            const hours = d.getHours().toString().padStart(2, '0');
+            const minutes = d.getMinutes().toString().padStart(2, '0');
 
-            return `${day}/${month}/${year} ${hours}:${strMinutes} ${ampm}`;
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
         } catch (e) {
             return dateStr;
         }

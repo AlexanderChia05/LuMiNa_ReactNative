@@ -665,9 +665,23 @@ export const Api = {
 
     const orderId = orderData?.order_id || 'N/A';
 
+    const { data: staffData } = await supabase.from('staff').select('name').eq('staff_id', appointment.staffId).single();
+
     const finalReceipt: Receipt = {
       ...receiptData,
       id: orderId,
+      userId: appointment.userId,
+      serviceName: service?.service_name || 'Service',
+      staffName: staffData?.name || 'Stylist',
+      customerName: customer.name,
+      date: new Date().toISOString(),
+      bookingDate: new Date().toISOString(),
+      appointmentDate: `${dateStr}T${startTimeStr}`,
+      // receiptData has financial fields, but ensure defaults if missing
+      totalCents: (receiptData?.servicePriceCents || pricePaid) + (receiptData?.surchargeCents || 0),
+      discountCents: voucher ? (voucher.discountCents || 0) : 0,
+      depositCents: pricePaid,
+      balanceCents: 0,
       appointmentId: refId,
       status: 'paid'
     };

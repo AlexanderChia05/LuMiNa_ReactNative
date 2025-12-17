@@ -783,7 +783,8 @@ export default function BookAppointment() {
                 roundingCents: roundingCents,
                 transactionRef: transactionRef,
                 servicePriceCents: basePrice,
-                totalPayableCents: finalTotalCents
+                totalPayableCents: finalTotalCents,
+                discountCents: discount
             });
 
             if (result) {

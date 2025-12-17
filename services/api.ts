@@ -679,7 +679,7 @@ export const Api = {
       appointmentDate: `${dateStr}T${startTimeStr}`,
       // receiptData has financial fields, but ensure defaults if missing
       totalCents: (receiptData?.servicePriceCents || pricePaid) + (receiptData?.surchargeCents || 0),
-      discountCents: voucher ? (voucher.discountCents || 0) : 0,
+      discountCents: receiptData?.discountCents !== undefined ? receiptData.discountCents : (voucher ? (voucher.discountCents || 0) : 0),
       depositCents: pricePaid,
       balanceCents: 0,
       appointmentId: refId,

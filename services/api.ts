@@ -1132,7 +1132,7 @@ export const Api = {
       .eq('user_id', userId);
 
     if (error) return [];
-    return data.map((c: any) => ({
+    return (data || []).map((c: any) => ({
       id: c.id,
       last4: c.last4,
       brand: c.brand as any,

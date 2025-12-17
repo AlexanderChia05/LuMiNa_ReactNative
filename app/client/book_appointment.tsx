@@ -839,6 +839,14 @@ export default function BookAppointment() {
     }
 
 
+    if (!user) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }]}>
+                <ActivityIndicator size="large" color={colors.accent} />
+            </SafeAreaView>
+        );
+    }
+
     if (bookingStep === 'success') {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]}>

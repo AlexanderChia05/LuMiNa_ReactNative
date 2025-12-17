@@ -76,7 +76,7 @@ export default function BookAppointment() {
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [selectedVoucher, setSelectedVoucher] = useState<Reward | null>(null);
     const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
-    const [voucherModalVisible, setVoucherModalVisible] = useState(false);
+
 
     // Calendar Generation
     const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
@@ -534,49 +534,75 @@ export default function BookAppointment() {
                 </Card>
 
                 {/* Promotions / Vouchers */}
+                {/* Promotions / Vouchers */}
                 <View style={{ gap: 8 }}>
                     <Text style={[styles.sectionLabel, { color: isDark ? colors.text900 : '#111827' }]}>Offers & Vouchers</Text>
 
-                    {/* Promo Card if selected */}
-                    {selectedPromotion && (
-                        <TouchableOpacity style={[styles.offerCard, styles.offerCardActive]} onPress={() => setVoucherModalVisible(true)}>
-                            <View style={{ flex: 1 }}>
-                                <View style={styles.offerRow}>
-                                    <Tag size={16} color={colors.accent} />
-                                    <Text style={styles.offerTitle}>{selectedPromotion.title}</Text>
+                    {/* Promotions */}
+                    {promotions.map(p => {
+                        const isSelected = selectedPromotion?.id === p.id;
+                        return (
+                            <TouchableOpacity
+                                key={p.id}
+                                style={[
+                                    styles.offerCard,
+                                    { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' },
+                                    isSelected && styles.offerCardActive
+                                ]}
+                                onPress={() => {
+                                    if (isSelected) setSelectedPromotion(null);
+                                    else { setSelectedPromotion(p); setSelectedVoucher(null); }
+                                }}
+                            >
+                                <View style={{ flex: 1 }}>
+                                    <View style={styles.offerRow}>
+                                        <Tag size={16} color={isSelected ? '#15803d' : '#9ca3af'} />
+                                        <Text style={[styles.offerTitle, !isSelected && { color: isDark ? colors.text900 : '#111827' }]}>{p.title}</Text>
+                                    </View>
+                                    <Text style={[styles.offerDesc, !isSelected && { color: '#6b7280' }]}>{p.discount}</Text>
+                                    <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }]}>Special Offer</Text>
                                 </View>
-                                <Text style={styles.offerDesc}>{selectedPromotion.discount}</Text>
-                                <Text style={styles.offerType}>Special Offer</Text>
-                            </View>
-                            <CheckCircle size={20} color={colors.accent} />
-                        </TouchableOpacity>
-                    )}
+                                {isSelected ? <CheckCircle size={20} color="#15803d" /> : <View style={{ width: 20 }} />}
+                            </TouchableOpacity>
+                        );
+                    })}
 
-                    {/* Voucher Card if selected */}
-                    {selectedVoucher && (
-                        <TouchableOpacity style={[styles.offerCard, styles.offerCardActive]} onPress={() => setVoucherModalVisible(true)}>
-                            <View style={{ flex: 1 }}>
-                                <View style={styles.offerRow}>
-                                    <Gift size={16} color={colors.accent} />
-                                    <Text style={styles.offerTitle}>{selectedVoucher.title}</Text>
+                    {/* Vouchers */}
+                    {vouchers.map(v => {
+                        const isSelected = selectedVoucher?.id === v.id;
+                        const base = selectedService?.priceCents || 0;
+                        const surcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
+                        const total = base + surcharge;
+                        const isDisabled = !v.title.includes('%') && v.discountCents >= total;
+
+                        return (
+                            <TouchableOpacity
+                                key={v.id}
+                                disabled={isDisabled}
+                                style={[
+                                    styles.offerCard,
+                                    { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' },
+                                    isSelected && styles.offerCardActive,
+                                    isDisabled && { opacity: 0.5 }
+                                ]}
+                                onPress={() => {
+                                    if (isSelected) setSelectedVoucher(null);
+                                    else { setSelectedVoucher(v); setSelectedPromotion(null); }
+                                }}
+                            >
+                                <View style={{ flex: 1 }}>
+                                    <View style={styles.offerRow}>
+                                        <Gift size={16} color={isSelected ? '#15803d' : '#9ca3af'} />
+                                        <Text style={[styles.offerTitle, !isSelected && { color: isDark ? colors.text900 : '#111827' }]}>{v.title}</Text>
+                                    </View>
+                                    <Text style={[styles.offerDesc, !isSelected && { color: '#6b7280' }]}>{v.description}</Text>
+                                    <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }]}>My Voucher</Text>
+                                    {isDisabled && <Text style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>Order value too low.</Text>}
                                 </View>
-                                <Text style={styles.offerDesc}>{selectedVoucher.description}</Text>
-                                <Text style={styles.offerType}>My Voucher</Text>
-                            </View>
-                            <CheckCircle size={20} color={colors.accent} />
-                        </TouchableOpacity>
-                    )}
-
-                    {/* Empty State / Add Button */}
-                    {!selectedPromotion && !selectedVoucher && (
-                        <TouchableOpacity style={[styles.offerCard, { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' }]} onPress={() => setVoucherModalVisible(true)}>
-                            <View style={styles.offerRow}>
-                                <Ticket size={18} color="#9ca3af" />
-                                <Text style={[styles.offerTitle, { color: '#6b7280' }]}>See available offers</Text>
-                            </View>
-                            <ChevronRight size={18} color="#9ca3af" />
-                        </TouchableOpacity>
-                    )}
+                                {isSelected ? <CheckCircle size={20} color="#15803d" /> : <View style={{ width: 20 }} />}
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
 
                 {/* Billing By Line */}
@@ -895,71 +921,7 @@ export default function BookAppointment() {
                 {bookingStep === 'checkout' && renderCheckoutStep()}
             </ScrollView>
 
-            {/* Voucher Selection Modal */}
-            <Modal visible={voucherModalVisible} transparent animationType="slide">
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: isDark ? colors.bgCard : '#fff', maxHeight: '70%' }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: isDark ? colors.text900 : '#111827' }]}>Select Offer</Text>
-                            <TouchableOpacity onPress={() => setVoucherModalVisible(false)}>
-                                <X size={24} color={isDark ? colors.text600 : '#6b7280'} />
-                            </TouchableOpacity>
-                        </View>
-                        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-                            <Text style={styles.sectionLabel}>Promotions</Text>
-                            {promotions.map(p => (
-                                <TouchableOpacity
-                                    key={p.id}
-                                    style={[styles.voucherItem, { backgroundColor: isDark ? colors.bgSecondary : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' }, selectedPromotion?.id === p.id && styles.voucherItemActive]}
-                                    onPress={() => { setSelectedPromotion(p); setSelectedVoucher(null); setVoucherModalVisible(false); }}
-                                >
-                                    <View style={{ flex: 1 }}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                            <Tag size={16} color={selectedPromotion?.id === p.id ? '#15803d' : '#9ca3af'} />
-                                            <Text style={[styles.voucherTitle, { color: isDark ? colors.text900 : '#111827' }]}>{p.title}</Text>
-                                        </View>
-                                        <Text style={styles.voucherDesc}>{p.discount}</Text>
-                                    </View>
-                                    {selectedPromotion?.id === p.id && <Check size={20} color="#15803d" />}
-                                </TouchableOpacity>
-                            ))}
 
-                            <Text style={[styles.sectionLabel, { marginTop: 16 }]}>My Vouchers</Text>
-                            {vouchers.length === 0 && <Text style={{ color: '#6b7280', fontStyle: 'italic' }}>No vouchers found.</Text>}
-                            {vouchers.map(v => {
-                                const base = selectedService?.priceCents || 0;
-                                const surcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
-                                const total = base + surcharge;
-                                const isDisabled = !v.title.includes('%') && v.discountCents >= total;
-
-                                return (
-                                    <TouchableOpacity
-                                        key={v.id}
-                                        disabled={isDisabled}
-                                        style={[
-                                            styles.voucherItem,
-                                            { backgroundColor: isDark ? colors.bgSecondary : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' },
-                                            selectedVoucher?.id === v.id && styles.voucherItemActiveRose,
-                                            isDisabled && styles.voucherItemDisabled
-                                        ]}
-                                        onPress={() => { setSelectedVoucher(v); setSelectedPromotion(null); setVoucherModalVisible(false); }}
-                                    >
-                                        <View style={{ flex: 1 }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                                <Gift size={16} color={selectedVoucher?.id === v.id ? colors.accent : '#9ca3af'} />
-                                                <Text style={[styles.voucherTitle, { color: isDark ? colors.text900 : '#111827' }, isDisabled && { color: '#9ca3af' }]}>{v.title}</Text>
-                                            </View>
-                                            <Text style={styles.voucherDesc}>{v.description}</Text>
-                                            {isDisabled && <Text style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>Order value too low.</Text>}
-                                        </View>
-                                        {selectedVoucher?.id === v.id && <Check size={20} color={colors.accent} />}
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </ScrollView>
-                    </View>
-                </View>
-            </Modal>
 
             {/* Payment Simulator Modal */}
             <Modal visible={isPaymentModalVisible} transparent animationType="slide">

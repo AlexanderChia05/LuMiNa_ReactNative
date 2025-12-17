@@ -39,7 +39,7 @@ import {
     Tag
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatSGDate, getRankSurcharge } from '@/utils/helpers';
+import { formatSGDate, getRankSurcharge, formatCardNumber, formatCardExpiry } from '@/utils/helpers';
 import { AuthService } from '@/services/auth';
 
 const EXTENDED_TIME_SLOTS = [
@@ -161,6 +161,11 @@ export default function BookAppointment() {
             setTngPin('');
             setOtp('');
             setPayError('');
+
+            // Refresh saved cards
+            if (user?.id) {
+                Api.getSavedCards(user.id).then(cards => setSavedCards(cards || []));
+            }
 
             // Show tab bar on services screen - reset to initial state
             navigation.setOptions({
@@ -701,20 +706,31 @@ export default function BookAppointment() {
             return "Only Visa (4) and Mastercard (2,5) accepted.";
         }
 
-        if (cleanNum.length < 15 || cleanNum.length > 19) return "Invalid card number length.";
+        if (cleanNum.length !== 16) return "Card number must be 16 digits.";
 
-        // 2. Check Expiry
-        if (!cardForm.expiry || cardForm.expiry.length !== 5) return "Invalid expiry.";
+        // 2. Check Expiry - Dynamic validation
+        if (!cardForm.expiry || cardForm.expiry.length !== 5) return "Invalid expiry format (MM/YY).";
         const [mm, yy] = cardForm.expiry.split('/').map(Number);
         const now = new Date();
-        const curYear = parseInt(now.getFullYear().toString().slice(-2));
+        const curYear = now.getFullYear() % 100; // Get last 2 digits of current year
         const curMonth = now.getMonth() + 1;
+        const maxYear = curYear + 10; // Maximum 10 years from now
 
-        if (!mm || !yy || mm < 1 || mm > 12) return "Invalid month.";
-        if (yy < curYear || (yy === curYear && mm < curMonth)) return "Card has expired.";
+        if (!mm || mm < 1 || mm > 12) return "Invalid month (01-12).";
+        if (!yy) return "Invalid year.";
+
+        // Check if card has expired
+        if (yy < curYear || (yy === curYear && mm < curMonth)) {
+            return "Card has expired.";
+        }
+
+        // Check if expiry is within 10 years
+        if (yy > maxYear) {
+            return `Expiry year must be within 10 years (up to ${maxYear}).`;
+        }
 
         // 3. Check CVC
-        if (cardForm.cvc.length < 3) return "Invalid CVC.";
+        if (cardForm.cvc.length !== 3) return "CVC must be exactly 3 digits.";
 
         // 4. Check Holder Name
         if (!cardForm.name.trim()) return "Cardholder name is required.";
@@ -817,7 +833,7 @@ export default function BookAppointment() {
                 status: AppointmentStatus.CONFIRMED
             };
 
-            if (!apptData.staffId && staffList.length > 0) apptData.staffId = staffList[0].id;
+            if (!apptData.staffId && staffList.length > 0) apptData.staffId = staffList[0]?.id;
 
             // Pass all receipt data to API for database storage
             const result = await Api.createAppointment(apptData, finalTotalCents, selectedVoucher || undefined, {
@@ -833,6 +849,22 @@ export default function BookAppointment() {
 
             if (result) {
                 setIsPaymentModalVisible(false);
+
+                // Save the new card if checkbox was checked
+                // Fixed: Check (useNewCard || savedCards.length === 0) since useNewCard might be false if list is empty
+                if (saveNewCard && (useNewCard || savedCards.length === 0) && cardForm.number) {
+                    const cleanNum = cardForm.number.replace(/\D/g, '');
+                    const newCard = await Api.addCard(user.id, {
+                        last4: cleanNum.slice(-4),
+                        brand: cleanNum.startsWith('4') ? 'visa' : 'mastercard',
+                        expiry: cardForm.expiry,
+                        holderName: cardForm.name
+                    });
+
+                    if (newCard) {
+                        setSavedCards(prev => [...prev, newCard]);
+                    }
+                }
 
                 const r: Receipt = {
                     id: result.orderId, // Use order_id as Receipt No.
@@ -972,58 +1004,63 @@ export default function BookAppointment() {
                             )}
 
                             {payStep === 'card' && (
-                                <View style={{ gap: 16 }}>
-
-                                    {/* Saved Cards List */}
-                                    {!useNewCard && savedCards.length > 0 && (
-                                        <View style={{ gap: 12 }}>
-                                            <Text style={{ fontWeight: '700', color: isDark ? colors.text600 : '#6b7280', fontSize: 12 }}>SAVED CARDS</Text>
-                                            {savedCards.map((card: any) => (
-                                                <TouchableOpacity
-                                                    key={card.id}
-                                                    style={[styles.payMethodCard, selectedSavedCard === card.id && { borderColor: colors.accent, backgroundColor: isDark ? '#374151' : '#fff1f2' }]}
-                                                    onPress={() => setSelectedSavedCard(card.id)}
-                                                >
-                                                    <View style={[styles.iconCircle, { backgroundColor: '#dbeafe' }]}>
-                                                        <CreditCard size={20} color="#2563eb" />
-                                                    </View>
-                                                    <View>
-                                                        <Text style={[styles.methodTitle, { color: isDark ? colors.text900 : '#111827' }]}>•••• {card.last4}</Text>
-                                                        <Text style={styles.methodSub}>Expires {card.expiry}</Text>
-                                                    </View>
-                                                    {selectedSavedCard === card.id && <Check size={20} color={colors.accent} style={{ marginLeft: 'auto' }} />}
-                                                </TouchableOpacity>
-                                            ))}
-
-                                            <TouchableOpacity onPress={() => { setUseNewCard(true); setSelectedSavedCard(null); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                                                <View style={{ width: 40, height: 40, borderRadius: 20, borderStyle: 'dashed', borderWidth: 1, borderColor: '#9ca3af', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <CreditCard size={20} color="#9ca3af" />
-                                                </View>
-                                                <Text style={{ fontWeight: '600', color: isDark ? colors.text900 : '#111827' }}>Use New Card</Text>
-                                            </TouchableOpacity>
-
-                                            {payError ? <Text style={styles.errorText}>{payError}</Text> : null}
-                                            <Button onPress={proceedToOTP} loading={processing} disabled={!selectedSavedCard}>
-                                                Pay with Saved Card
-                                            </Button>
-                                        </View>
+                                <View style={{ gap: 12 }}>
+                                    {/* Saved Cards Section */}
+                                    {savedCards.length > 0 && (
+                                        <Text style={{ fontWeight: '700', color: isDark ? colors.text600 : '#6b7280', fontSize: 12, textTransform: 'uppercase' }}>Saved Cards</Text>
                                     )}
 
-                                    {/* New Card Form */}
-                                    {(useNewCard || savedCards.length === 0) && (
-                                        <View style={{ gap: 16 }}>
-                                            {savedCards.length > 0 && (
-                                                <TouchableOpacity onPress={() => setUseNewCard(false)} style={{ marginBottom: 8 }}>
-                                                    <Text style={{ color: colors.accent, fontWeight: '600' }}>Back to Saved Cards</Text>
-                                                </TouchableOpacity>
-                                            )}
+                                    {/* Saved Cards List */}
+                                    {savedCards.filter(c => c).map((card: any) => {
+                                        const isSelected = !useNewCard && selectedSavedCard === card?.id;
+                                        const isVisa = card?.brand?.toLowerCase().includes('visa');
+                                        const isMaster = card?.brand?.toLowerCase().includes('master');
+                                        const brandColor = isVisa ? '#2563eb' : (isMaster ? '#ef4444' : (isDark ? colors.text600 : '#6b7280'));
 
+                                        return (
+                                            <TouchableOpacity
+                                                key={card?.id || Math.random()}
+                                                style={[
+                                                    styles.cardSelectItem,
+                                                    { borderColor: isDark ? colors.border : '#e5e7eb' },
+                                                    isSelected && { borderColor: colors.accent }
+                                                ]}
+                                                onPress={() => { setSelectedSavedCard(card?.id); setUseNewCard(false); }}
+                                            >
+                                                <View style={[styles.cardIconBox, { backgroundColor: isDark ? colors.bgSecondary : '#f3f4f6' }]}>
+                                                    <CreditCard size={16} color={brandColor} />
+                                                </View>
+                                                <Text style={[styles.cardSelectText, { color: isDark ? colors.text900 : '#111827' }]}>
+                                                    {card.brand ? (card.brand.charAt(0).toUpperCase() + card.brand.slice(1)) : 'Card'} •••• {card.last4}
+                                                </Text>
+                                                {isSelected && <Check size={20} color={colors.accent} style={{ marginLeft: 'auto' }} />}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+
+                                    {/* Use New Card Option */}
+                                    <TouchableOpacity
+                                        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: savedCards.length > 0 ? 8 : 0 }}
+                                        onPress={() => { setUseNewCard(true); setSelectedSavedCard(null); }}
+                                    >
+                                        <View style={[
+                                            styles.radioOuter,
+                                            { borderColor: (useNewCard || savedCards.length === 0) ? colors.accent : (isDark ? colors.border : '#d1d5db') }
+                                        ]}>
+                                            {(useNewCard || savedCards.length === 0) && <View style={[styles.radioInner, { backgroundColor: colors.accent }]} />}
+                                        </View>
+                                        <Text style={{ fontWeight: '600', color: isDark ? colors.text900 : '#111827', fontSize: 14 }}>Use New Card</Text>
+                                    </TouchableOpacity>
+
+                                    {/* Inline New Card Form */}
+                                    {useNewCard && (
+                                        <View style={{ gap: 12, marginTop: 8 }}>
                                             <TextInput
                                                 placeholder="Card Number"
-                                                placeholderTextColor="#9ca3af"
+                                                placeholderTextColor={colors.accent}
                                                 value={cardForm.number}
-                                                onChangeText={t => setCardForm({ ...cardForm, number: t })}
-                                                style={[styles.input, { color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
+                                                onChangeText={t => setCardForm({ ...cardForm, number: formatCardNumber(t) })}
+                                                style={[styles.cardInput, { color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
                                                 keyboardType="number-pad"
                                                 maxLength={19}
                                             />
@@ -1032,33 +1069,59 @@ export default function BookAppointment() {
                                                     placeholder="MM/YY"
                                                     placeholderTextColor="#9ca3af"
                                                     value={cardForm.expiry}
-                                                    onChangeText={t => setCardForm({ ...cardForm, expiry: t })}
-                                                    style={[styles.input, { flex: 1, color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
+                                                    onChangeText={t => setCardForm({ ...cardForm, expiry: formatCardExpiry(t) })}
+                                                    style={[styles.cardInput, { flex: 1, color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
                                                     maxLength={5}
                                                 />
                                                 <TextInput
                                                     placeholder="CVC"
                                                     placeholderTextColor="#9ca3af"
                                                     value={cardForm.cvc}
-                                                    onChangeText={t => setCardForm({ ...cardForm, cvc: t })}
-                                                    style={[styles.input, { flex: 1, color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
+                                                    onChangeText={t => setCardForm({ ...cardForm, cvc: t.replace(/\D/g, '') })}
+                                                    style={[styles.cardInput, { flex: 1, color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
                                                     keyboardType="number-pad"
                                                     secureTextEntry
-                                                    maxLength={4}
+                                                    maxLength={3}
                                                 />
                                             </View>
                                             <TextInput
                                                 placeholder="Cardholder Name"
                                                 placeholderTextColor="#9ca3af"
                                                 value={cardForm.name}
-                                                onChangeText={t => setCardForm({ ...cardForm, name: t })}
-                                                style={[styles.input, { color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
+                                                onChangeText={t => setCardForm({ ...cardForm, name: t.toUpperCase() })}
+                                                style={[styles.cardInput, { color: isDark ? colors.text900 : '#111827', borderColor: isDark ? colors.border : '#e5e7eb' }]}
+                                                autoCapitalize="characters"
                                             />
 
-                                            {payError ? <Text style={styles.errorText}>{payError}</Text> : null}
-                                            <Button onPress={proceedToOTP} loading={processing}>Pay</Button>
+                                            {/* Save Card Checkbox */}
+                                            <TouchableOpacity
+                                                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                                                onPress={() => setSaveNewCard(!saveNewCard)}
+                                            >
+                                                <View style={[
+                                                    styles.checkbox,
+                                                    { borderColor: isDark ? colors.border : '#d1d5db' },
+                                                    saveNewCard && { backgroundColor: colors.accent, borderColor: colors.accent }
+                                                ]}>
+                                                    {saveNewCard && <Check size={12} color="#fff" />}
+                                                </View>
+                                                <Text style={{ fontSize: 12, color: isDark ? colors.text600 : '#6b7280' }}>Save this card for future payments</Text>
+                                            </TouchableOpacity>
                                         </View>
                                     )}
+
+                                    {/* Error Message */}
+                                    {payError ? <Text style={styles.errorText}>{payError}</Text> : null}
+
+                                    {/* Pay Button */}
+                                    <Button
+                                        onPress={proceedToOTP}
+                                        loading={processing}
+                                        disabled={!useNewCard && !selectedSavedCard}
+                                        style={{ marginTop: 8 }}
+                                    >
+                                        Pay RM {(priceCalculation.finalTotalCents / 100).toFixed(2)}
+                                    </Button>
                                 </View>
                             )}
 
@@ -1208,5 +1271,13 @@ const styles = StyleSheet.create({
     voucherCardActive: { borderColor: '#e11d48', backgroundColor: '#fff1f2' },
     voucherItemDisabled: { opacity: 0.5 },
     voucherTitle: { fontSize: 14, fontWeight: '700' },
-    voucherDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 }
+    voucherDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+    // Card Payment UI Styles
+    cardSelectItem: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, borderRadius: 12, gap: 12 },
+    cardIconBox: { width: 32, height: 32, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+    cardSelectText: { fontSize: 14, fontWeight: '600' },
+    radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+    radioInner: { width: 10, height: 10, borderRadius: 5 },
+    cardInput: { borderWidth: 1, borderRadius: 8, padding: 14, fontSize: 14 },
+    checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' }
 });

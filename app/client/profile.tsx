@@ -143,17 +143,65 @@ export default function ClientProfile() {
         ]);
     };
 
+    // Card validation function - same logic as book_appointment.tsx
+    const validateCard = (): string | null => {
+        const cleanNum = cardNumber.replace(/\D/g, '');
+
+        // 1. Check Brand (Visa = 4, Mastercard = 2 or 5)
+        if (!cleanNum.startsWith('4') && !cleanNum.startsWith('5') && !cleanNum.startsWith('2')) {
+            return "Only Visa (4) and Mastercard (2,5) accepted.";
+        }
+
+        if (cleanNum.length !== 16) return "Card number must be 16 digits.";
+
+        // 2. Check Expiry - Dynamic validation
+        if (!expiry || expiry.length !== 5) return "Invalid expiry format (MM/YY).";
+        const [mm, yy] = expiry.split('/').map(Number);
+        const now = new Date();
+        const curYear = now.getFullYear() % 100; // Get last 2 digits of current year
+        const curMonth = now.getMonth() + 1;
+        const maxYear = curYear + 10; // Maximum 10 years from now
+
+        if (!mm || mm < 1 || mm > 12) return "Invalid month (01-12).";
+        if (!yy) return "Invalid year.";
+
+        // Check if card has expired
+        if (yy < curYear || (yy === curYear && mm < curMonth)) {
+            return "Card has expired.";
+        }
+
+        // Check if expiry is within 10 years
+        if (yy > maxYear) {
+            return `Expiry year must be within 10 years (up to ${maxYear}).`;
+        }
+
+        // 3. Check CVC
+        if (cvc.length !== 3) return "CVC must be exactly 3 digits.";
+
+        // 4. Check Holder Name
+        if (!holderName.trim()) return "Cardholder name is required.";
+
+        return null;
+    };
+
     const handleAddCard = async () => {
-        if (!user || !cardNumber || !expiry || !cvc || !holderName) {
-            Alert.alert("Error", "Please fill in all fields.");
+        if (!user) {
+            Alert.alert("Error", "User not authenticated.");
+            return;
+        }
+
+        // Run validation
+        const validationError = validateCard();
+        if (validationError) {
+            Alert.alert("Validation Error", validationError);
             return;
         }
 
         setLoading(true);
-        // Simple validation or formatting could happen here
+        const cleanNum = cardNumber.replace(/\D/g, '');
         const newCard = await Api.addCard(user.id, {
-            last4: cardNumber.slice(-4),
-            brand: 'visa', // Mock brand detection
+            last4: cleanNum.slice(-4),
+            brand: cleanNum.startsWith('4') ? 'visa' : 'mastercard',
             expiry: expiry,
             holderName: holderName
         });
@@ -302,9 +350,16 @@ export default function ClientProfile() {
                                         {cards.map(card => (
                                             <View key={card.id} style={[styles.cardItem, { backgroundColor: isDark ? colors.bgSecondary : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' }]}>
                                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                                    <View style={{ width: 40, height: 25, backgroundColor: '#e5e7eb', borderRadius: 4 }} />
+                                                    <View style={{ width: 40, height: 25, justifyContent: 'center', alignItems: 'center', backgroundColor: isDark ? colors.bgSecondary : '#e5e7eb', borderRadius: 4 }}>
+                                                        <CreditCard
+                                                            size={20}
+                                                            color={card.brand?.toLowerCase().includes('visa') ? '#2563eb' : (card.brand?.toLowerCase().includes('master') ? '#ef4444' : (isDark ? colors.text600 : '#6b7280'))}
+                                                        />
+                                                    </View>
                                                     <View>
-                                                        <Text style={[styles.cardLast4, { color: isDark ? colors.text900 : '#000' }]}>•••• {card.last4}</Text>
+                                                        <Text style={[styles.cardLast4, { color: isDark ? colors.text900 : '#000' }]}>
+                                                            {card.brand ? (card.brand.charAt(0).toUpperCase() + card.brand.slice(1)) : 'Card'} •••• {card.last4}
+                                                        </Text>
                                                         <Text style={styles.cardExpiry}>Expires {card.expiry}</Text>
                                                     </View>
                                                 </View>

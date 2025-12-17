@@ -578,7 +578,7 @@ export const Api = {
     return (data || []).map(mapTransaction);
   },
 
-  createAppointment: async (appointment: Partial<Appointment>, pricePaid: number, voucher?: Reward, receiptData?: any): Promise<string | null> => {
+  createAppointment: async (appointment: Partial<Appointment>, pricePaid: number, voucher?: Reward, receiptData?: any): Promise<{ refId: string; orderId: string } | null> => {
     if (!appointment.userId || !appointment.serviceId || !appointment.staffId || !appointment.date) return null;
 
     const { data: customer } = await supabase.from('customer').select('customer_id, name').eq('user_id', appointment.userId).single();
@@ -626,15 +626,18 @@ export const Api = {
       service_price: pricePaid
     }]);
 
+    // Generate SIM transaction reference (matching React DOM format)
+    const simTransactionRef = receiptData?.transactionRef || `SIM-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
     const { data: orderData } = await supabase.from('order_table').insert([{
       appointment_id: apptId,
-      payment_method: receiptData?.paymentMethod === 'Touch \'n Go' ? 'tng' : 'card',
+      payment_method: receiptData?.paymentMethod === "Touch 'n Go" ? 'tng' : 'card',
       sst_cents: receiptData?.sstCents || 0,
       rounding_cents: receiptData?.roundingCents || 0,
       surcharge_cents: receiptData?.surchargeCents || 0,
       total_payable_cents: pricePaid,
       status: 'paid',
-      transaction_ref: receiptData?.transactionRef || null // Store Stripe/HitPay Ref
+      transaction_ref: simTransactionRef
     }]).select().single();
 
     if (orderData && voucher) {
@@ -663,9 +666,11 @@ export const Api = {
       }]);
     }
 
+    const orderId = orderData?.order_id || 'N/A';
+
     const finalReceipt: Receipt = {
       ...receiptData,
-      id: orderData?.order_id || 'N/A',
+      id: orderId,
       appointmentId: refId,
       status: 'paid'
     };
@@ -685,7 +690,7 @@ export const Api = {
       read: false,
     }]);
 
-    return refId;
+    return { refId, orderId };
   },
 
   updateAppointmentStatus: async (dbId: string, status: string): Promise<boolean> => {

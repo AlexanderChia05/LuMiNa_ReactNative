@@ -117,17 +117,60 @@ export default function BookAppointment() {
             setOtp('');
             setPayError('');
 
-            // Show tab bar on services screen
-            navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+            // Show tab bar on services screen - reset to initial state
+            navigation.getParent()?.setOptions({
+                tabBarStyle: {
+                    position: 'absolute',
+                    bottom: 25,
+                    left: 20,
+                    right: 20,
+                    height: 72,
+                    borderRadius: 32,
+                    display: 'flex'
+                }
+            });
+
+            // Return cleanup function to restore tab bar when leaving
+            return () => {
+                navigation.getParent()?.setOptions({
+                    tabBarStyle: {
+                        position: 'absolute',
+                        bottom: 25,
+                        left: 20,
+                        right: 20,
+                        height: 72,
+                        borderRadius: 32,
+                        display: 'flex'
+                    }
+                });
+            };
         }, [navigation])
     );
 
     // Hide tab bar when leaving services step
     useEffect(() => {
         if (bookingStep !== 'services') {
-            navigation.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+            // Hide tab bar by moving it off screen
+            navigation.getParent()?.setOptions({
+                tabBarStyle: {
+                    position: 'absolute',
+                    bottom: -100,
+                    display: 'none'
+                }
+            });
         } else {
-            navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+            // Show tab bar with full styling
+            navigation.getParent()?.setOptions({
+                tabBarStyle: {
+                    position: 'absolute',
+                    bottom: 25,
+                    left: 20,
+                    right: 20,
+                    height: 72,
+                    borderRadius: 32,
+                    display: 'flex'
+                }
+            });
         }
     }, [bookingStep, navigation]);
 
@@ -716,9 +759,6 @@ export default function BookAppointment() {
             const finalTotalCents = Math.round(roundedRM * 100);
             const roundingCents = finalTotalCents - totalBeforeRounding;
 
-            // Generate transaction reference
-            const transactionRef = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-
             // Call API
             const apptData: Partial<Appointment> = {
                 userId: user.id,
@@ -731,21 +771,22 @@ export default function BookAppointment() {
             if (!apptData.staffId && staffList.length > 0) apptData.staffId = staffList[0].id;
 
             // Pass all receipt data to API for database storage
-            const refId = await Api.createAppointment(apptData, finalTotalCents, selectedVoucher || undefined, {
+            // API generates SIM-XXXXXX format transaction_ref
+            const result = await Api.createAppointment(apptData, finalTotalCents, selectedVoucher || undefined, {
                 paymentMethod: payStep === 'card' || payStep === 'otp' ? 'card' : "Touch 'n Go",
                 sstCents: sstCents,
                 surchargeCents: rankSurcharge,
                 roundingCents: roundingCents,
-                transactionRef: transactionRef,
                 servicePriceCents: basePrice,
                 totalPayableCents: finalTotalCents
             });
 
-            if (refId) {
+            if (result) {
                 setIsPaymentModalVisible(false);
 
                 const r: Receipt = {
-                    id: refId,
+                    id: result.orderId, // Use order_id as Receipt No.
+                    appointmentId: result.refId,
                     userId: user.id,
                     serviceName: selectedService.name,
                     staffName: selectedStaff ? selectedStaff.name : 'Any Professional',
@@ -760,8 +801,7 @@ export default function BookAppointment() {
                     sstCents: sstCents,
                     roundingCents: roundingCents,
                     discountCents: discount,
-                    paymentMethod: payStep === 'card' || payStep === 'otp' ? 'card' : "Touch 'n Go",
-                    transactionRef: transactionRef,
+                    paymentMethod: payStep === 'card' || payStep === 'otp' ? 'Credit Card' : "Touch 'n Go",
                     status: 'paid',
                     refundCents: 0
                 };

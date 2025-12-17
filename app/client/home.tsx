@@ -144,7 +144,7 @@ export default function ClientHome() {
                 {/* Points Card with Dynamic Tier Gradient */}
                 <LinearGradient
                     colors={getTierColors(tierInfo.current)}
-                    style={styles.pointsCard}
+                    style={[styles.pointsCard, { shadowColor: colors.accent }]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                 >
@@ -272,7 +272,7 @@ export default function ClientHome() {
                             {popularServices.map((service) => (
                                 <TouchableOpacity
                                     key={service.id}
-                                    style={styles.serviceCard}
+                                    style={[styles.serviceCard, { backgroundColor: isDark ? colors.bgCard : '#ffffff', borderColor: isDark ? colors.border : '#fce7eb' }]}
                                     onPress={() => router.push('/client/book_appointment')}
                                     activeOpacity={0.7}
                                 >
@@ -281,7 +281,7 @@ export default function ClientHome() {
                                         style={styles.serviceImage}
                                     />
                                     <View style={styles.serviceInfo}>
-                                        <Text style={styles.serviceName}>{service.name}</Text>
+                                        <Text style={[styles.serviceName, { color: colors.accent }]}>{service.name}</Text>
                                         <View style={styles.serviceDuration}>
                                             <Clock size={12} color="#737373" />
                                             <Text style={styles.durationText}>{service.durationMinutes} mins</Text>

@@ -126,7 +126,9 @@ export default function BookAppointment() {
                     right: 20,
                     height: 72,
                     borderRadius: 32,
-                    display: 'flex'
+                    display: 'flex',
+                    backgroundColor: isDark ? '#141414' : '#ffffff',
+                    borderTopWidth: 0
                 }
             });
 
@@ -140,7 +142,9 @@ export default function BookAppointment() {
                         right: 20,
                         height: 72,
                         borderRadius: 32,
-                        display: 'flex'
+                        display: 'flex',
+                        backgroundColor: isDark ? '#141414' : '#ffffff',
+                        borderTopWidth: 0
                     }
                 });
             };
@@ -328,7 +332,7 @@ export default function BookAppointment() {
                     <View style={styles.serviceInfo}>
                         <View style={styles.rowBetween}>
                             <Text style={[styles.serviceName, { color: isDark ? colors.text900 : '#111827' }]}>{service.name}</Text>
-                            <View style={styles.priceTag}>
+                            <View style={[styles.priceTag, { backgroundColor: colors.accent }]}>
                                 <Text style={styles.priceText}>From RM {(service.priceCents / 100).toFixed(0)}</Text>
                             </View>
                         </View>
@@ -347,7 +351,7 @@ export default function BookAppointment() {
         <View style={styles.grid}>
             <Card style={[styles.staffCard, { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' }]} onPress={() => { setSelectedStaff(null); setBookingStep('slot'); }}>
                 <View style={[styles.avatarPlaceholder, { backgroundColor: Colors.light.rose100 }]}>
-                    <Users size={24} color={Colors.light.rose500} />
+                    <Users size={24} color={colors.accent} />
                 </View>
                 <View style={styles.staffInfo}>
                     <Text style={[styles.staffName, { color: isDark ? colors.text900 : '#111827' }]}>Any Professional</Text>
@@ -377,7 +381,7 @@ export default function BookAppointment() {
                             </View>
                         </View>
                         <View style={{ alignItems: 'flex-end' }}>
-                            <Text style={{ color: Colors.light.rose500, fontWeight: '700', fontSize: 14 }}>
+                            <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 14 }}>
                                 RM {((selectedService?.priceCents || 0) + surcharge) / 100}
                             </Text>
                         </View>
@@ -423,7 +427,7 @@ export default function BookAppointment() {
                                     key={idx}
                                     style={[
                                         styles.dayCell,
-                                        isSelected && styles.dayCellSelected,
+                                        isSelected && { backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
                                         disabled && styles.dayCellDisabled
                                     ]}
                                     disabled={disabled}
@@ -453,7 +457,7 @@ export default function BookAppointment() {
                                     styles.slotButton,
                                     { borderColor: isDark ? colors.border : '#e5e7eb' },
                                     taken && styles.slotButtonDisabled,
-                                    selectedSlot === time && { backgroundColor: Colors.light.rose500, borderColor: Colors.light.rose500 }
+                                    selectedSlot === time && { backgroundColor: colors.accent, borderColor: colors.accent }
                                 ]}
                                 onPress={() => { setSelectedSlot(time); setBookingStep('checkout'); }}
                             >
@@ -534,13 +538,13 @@ export default function BookAppointment() {
                         <TouchableOpacity style={[styles.offerCard, styles.offerCardActive]} onPress={() => setVoucherModalVisible(true)}>
                             <View style={{ flex: 1 }}>
                                 <View style={styles.offerRow}>
-                                    <Tag size={16} color={Colors.light.rose500} />
+                                    <Tag size={16} color={colors.accent} />
                                     <Text style={styles.offerTitle}>{selectedPromotion.title}</Text>
                                 </View>
                                 <Text style={styles.offerDesc}>{selectedPromotion.discount}</Text>
                                 <Text style={styles.offerType}>Special Offer</Text>
                             </View>
-                            <CheckCircle size={20} color={Colors.light.rose500} />
+                            <CheckCircle size={20} color={colors.accent} />
                         </TouchableOpacity>
                     )}
 
@@ -549,13 +553,13 @@ export default function BookAppointment() {
                         <TouchableOpacity style={[styles.offerCard, styles.offerCardActive]} onPress={() => setVoucherModalVisible(true)}>
                             <View style={{ flex: 1 }}>
                                 <View style={styles.offerRow}>
-                                    <Gift size={16} color={Colors.light.rose500} />
+                                    <Gift size={16} color={colors.accent} />
                                     <Text style={styles.offerTitle}>{selectedVoucher.title}</Text>
                                 </View>
                                 <Text style={styles.offerDesc}>{selectedVoucher.description}</Text>
                                 <Text style={styles.offerType}>My Voucher</Text>
                             </View>
-                            <CheckCircle size={20} color={Colors.light.rose500} />
+                            <CheckCircle size={20} color={colors.accent} />
                         </TouchableOpacity>
                     )}
 
@@ -582,8 +586,8 @@ export default function BookAppointment() {
 
                     {discount > 0 && (
                         <View style={styles.billRow}>
-                            <Text style={[styles.billLabel, { color: Colors.light.rose500 }]}>Discount</Text>
-                            <Text style={[styles.billValue, { color: Colors.light.rose500 }]}>-RM {(discount / 100).toFixed(2)}</Text>
+                            <Text style={[styles.billLabel, { color: colors.accent }]}>Discount</Text>
+                            <Text style={[styles.billValue, { color: colors.accent }]}>-RM {(discount / 100).toFixed(2)}</Text>
                         </View>
                     )}
 
@@ -612,8 +616,8 @@ export default function BookAppointment() {
                     )}
 
                     <View style={[styles.billRow, styles.totalRow, { borderTopColor: isDark ? colors.border : '#e5e7eb' }]}>
-                        <Text style={styles.totalLabel}>Total Payable</Text>
-                        <Text style={styles.totalValue}>RM {(finalTotalCents / 100).toFixed(2)}</Text>
+                        <Text style={[styles.totalLabel, { color: colors.accent }]}>Total Payable</Text>
+                        <Text style={[styles.totalValue, { color: colors.accent }]}>RM {(finalTotalCents / 100).toFixed(2)}</Text>
                     </View>
                 </Card>
 
@@ -727,6 +731,12 @@ export default function BookAppointment() {
         if (!user || !selectedService || !selectedSlot) return;
 
         try {
+            if (!user || !selectedService) {
+                Alert.alert('Error', 'Missing user or service information.');
+                setProcessing(false);
+                return;
+            }
+
             const dateObj = getBookingDate(selectedDateOffset);
             const dateStr = dateObj.toISOString().split('T')[0];
 
@@ -861,7 +871,7 @@ export default function BookAppointment() {
                     {['services', 'staff', 'slot', 'checkout'].map((step, i) => {
                         const steps = ['services', 'staff', 'slot', 'checkout'];
                         const isActive = steps.indexOf(step) <= steps.indexOf(bookingStep);
-                        return <View key={step} style={[styles.progressDot, isActive && styles.progressDotActive]} />;
+                        return <View key={step} style={[styles.progressDot, isActive && { backgroundColor: colors.accent }]} />;
                     })}
                 </View>
             </View>
@@ -924,13 +934,13 @@ export default function BookAppointment() {
                                     >
                                         <View style={{ flex: 1 }}>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                                <Gift size={16} color={selectedVoucher?.id === v.id ? Colors.light.rose500 : '#9ca3af'} />
+                                                <Gift size={16} color={selectedVoucher?.id === v.id ? colors.accent : '#9ca3af'} />
                                                 <Text style={[styles.voucherTitle, { color: isDark ? colors.text900 : '#111827' }, isDisabled && { color: '#9ca3af' }]}>{v.title}</Text>
                                             </View>
                                             <Text style={styles.voucherDesc}>{v.description}</Text>
                                             {isDisabled && <Text style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>Order value too low.</Text>}
                                         </View>
-                                        {selectedVoucher?.id === v.id && <Check size={20} color={Colors.light.rose500} />}
+                                        {selectedVoucher?.id === v.id && <Check size={20} color={colors.accent} />}
                                     </TouchableOpacity>
                                 );
                             })}
@@ -993,7 +1003,7 @@ export default function BookAppointment() {
                                             {savedCards.map((card: any) => (
                                                 <TouchableOpacity
                                                     key={card.id}
-                                                    style={[styles.payMethodCard, selectedSavedCard === card.id && { borderColor: Colors.light.rose500, backgroundColor: isDark ? '#374151' : '#fff1f2' }]}
+                                                    style={[styles.payMethodCard, selectedSavedCard === card.id && { borderColor: colors.accent, backgroundColor: isDark ? '#374151' : '#fff1f2' }]}
                                                     onPress={() => setSelectedSavedCard(card.id)}
                                                 >
                                                     <View style={[styles.iconCircle, { backgroundColor: '#dbeafe' }]}>
@@ -1003,7 +1013,7 @@ export default function BookAppointment() {
                                                         <Text style={[styles.methodTitle, { color: isDark ? colors.text900 : '#111827' }]}>•••• {card.last4}</Text>
                                                         <Text style={styles.methodSub}>Expires {card.expiry}</Text>
                                                     </View>
-                                                    {selectedSavedCard === card.id && <Check size={20} color={Colors.light.rose500} style={{ marginLeft: 'auto' }} />}
+                                                    {selectedSavedCard === card.id && <Check size={20} color={colors.accent} style={{ marginLeft: 'auto' }} />}
                                                 </TouchableOpacity>
                                             ))}
 
@@ -1026,7 +1036,7 @@ export default function BookAppointment() {
                                         <View style={{ gap: 16 }}>
                                             {savedCards.length > 0 && (
                                                 <TouchableOpacity onPress={() => setUseNewCard(false)} style={{ marginBottom: 8 }}>
-                                                    <Text style={{ color: Colors.light.rose500, fontWeight: '600' }}>Back to Saved Cards</Text>
+                                                    <Text style={{ color: colors.accent, fontWeight: '600' }}>Back to Saved Cards</Text>
                                                 </TouchableOpacity>
                                             )}
 

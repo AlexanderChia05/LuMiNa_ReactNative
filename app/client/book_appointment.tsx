@@ -77,6 +77,51 @@ export default function BookAppointment() {
     const [selectedVoucher, setSelectedVoucher] = useState<Reward | null>(null);
     const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
 
+    // Price Calculation Logic
+    const priceCalculation = React.useMemo(() => {
+        if (!selectedService) return {
+            basePrice: 0, rankSurcharge: 0, discount: 0, taxableAmount: 0,
+            sstCents: 0, roundingCents: 0, finalTotalCents: 0
+        };
+
+        const basePrice = selectedService.priceCents;
+        const rankSurcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
+
+        let discount = 0;
+        if (selectedPromotion) {
+            const label = selectedPromotion.discount;
+            if (label.includes('%')) {
+                const percentage = parseInt(label.replace(/\D/g, ''));
+                if (!isNaN(percentage)) discount = Math.round(basePrice * (percentage / 100));
+            } else if (label.toLowerCase().includes('rm')) {
+                const amount = parseInt(label.replace(/\D/g, ''));
+                if (!isNaN(amount)) discount = amount * 100;
+            }
+        } else if (selectedVoucher) {
+            if (selectedVoucher.title.includes('%')) {
+                const percentage = parseInt(selectedVoucher.title);
+                const gross = basePrice + rankSurcharge;
+                discount = Math.round(gross * (percentage / 100));
+            } else {
+                discount = selectedVoucher.discountCents;
+            }
+        }
+
+        let taxableAmount = (basePrice + rankSurcharge) - discount;
+        taxableAmount = Math.max(0, taxableAmount);
+
+        const sstCents = Math.round(taxableAmount * 0.08);
+        const totalBeforeRounding = taxableAmount + sstCents;
+        const amountRM = totalBeforeRounding / 100;
+        const roundedRM = (Math.round(amountRM * 20) / 20);
+        const finalTotalCents = Math.round(roundedRM * 100);
+        const roundingCents = finalTotalCents - totalBeforeRounding;
+
+        return {
+            basePrice, rankSurcharge, discount, taxableAmount, sstCents, roundingCents, finalTotalCents
+        };
+    }, [selectedService, selectedStaff, selectedPromotion, selectedVoucher]);
+
 
     // Calendar Generation
     const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
@@ -482,38 +527,15 @@ export default function BookAppointment() {
     const renderCheckoutStep = () => {
         if (!selectedService) return null;
 
-        const basePrice = selectedService.priceCents;
-        const rankSurcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
-
-        let discount = 0;
-        if (selectedPromotion) {
-            const label = selectedPromotion.discount;
-            if (label.includes('%')) {
-                const percentage = parseInt(label.replace(/\D/g, ''));
-                if (!isNaN(percentage)) discount = Math.round(basePrice * (percentage / 100));
-            } else if (label.toLowerCase().includes('rm')) {
-                const amount = parseInt(label.replace(/\D/g, ''));
-                if (!isNaN(amount)) discount = amount * 100;
-            }
-        } else if (selectedVoucher) {
-            if (selectedVoucher.title.includes('%')) {
-                const percentage = parseInt(selectedVoucher.title);
-                const gross = basePrice + rankSurcharge;
-                discount = Math.round(gross * (percentage / 100));
-            } else {
-                discount = selectedVoucher.discountCents;
-            }
-        }
-
-        let taxableAmount = (basePrice + rankSurcharge) - discount;
-        taxableAmount = Math.max(0, taxableAmount);
-
-        const sstCents = Math.round(taxableAmount * 0.08);
-        const totalBeforeRounding = taxableAmount + sstCents;
-        const amountRM = totalBeforeRounding / 100;
-        const roundedRM = (Math.round(amountRM * 20) / 20);
-        const finalTotalCents = Math.round(roundedRM * 100);
-        const roundingCents = finalTotalCents - totalBeforeRounding;
+        const {
+            basePrice,
+            rankSurcharge,
+            discount,
+            taxableAmount,
+            sstCents,
+            roundingCents,
+            finalTotalCents
+        } = priceCalculation;
 
         return (
             <View style={styles.checkoutContainer}>
@@ -582,7 +604,7 @@ export default function BookAppointment() {
                                 style={[
                                     styles.offerCard,
                                     { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' },
-                                    isSelected && styles.offerCardActive,
+                                    isSelected && styles.voucherCardActive,
                                     isDisabled && { opacity: 0.5 }
                                 ]}
                                 onPress={() => {
@@ -592,14 +614,14 @@ export default function BookAppointment() {
                             >
                                 <View style={{ flex: 1 }}>
                                     <View style={styles.offerRow}>
-                                        <Gift size={16} color={isSelected ? '#15803d' : '#9ca3af'} />
-                                        <Text style={[styles.offerTitle, !isSelected && { color: isDark ? colors.text900 : '#111827' }]}>{v.title}</Text>
+                                        <Gift size={16} color={isSelected ? Colors.light.rose500 : '#9ca3af'} />
+                                        <Text style={[styles.offerTitle, !isSelected && { color: isDark ? colors.text900 : '#111827' }, isSelected && { color: Colors.light.rose600 }]}>{v.title}</Text>
                                     </View>
-                                    <Text style={[styles.offerDesc, !isSelected && { color: '#6b7280' }]}>{v.description}</Text>
-                                    <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }]}>My Voucher</Text>
+                                    <Text style={[styles.offerDesc, !isSelected && { color: '#6b7280' }, isSelected && { color: Colors.light.rose500 }]}>{v.description}</Text>
+                                    <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }, isSelected && { color: Colors.light.rose400 }]}>My Voucher</Text>
                                     {isDisabled && <Text style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>Order value too low.</Text>}
                                 </View>
-                                {isSelected ? <CheckCircle size={20} color="#15803d" /> : <View style={{ width: 20 }} />}
+                                {isSelected ? <CheckCircle size={20} color={Colors.light.rose500} /> : <View style={{ width: 20 }} />}
                             </TouchableOpacity>
                         );
                     })}
@@ -771,35 +793,14 @@ export default function BookAppointment() {
             const dateStr = dateObj.toISOString().split('T')[0];
 
             // Recalculate Logic to get FINAL CENTS
-            const basePrice = selectedService.priceCents;
-            const rankSurcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
-            let discount = 0;
-            if (selectedPromotion) {
-                const label = selectedPromotion.discount;
-                if (label.includes('%')) {
-                    const percentage = parseInt(label.replace(/\D/g, ''));
-                    if (!isNaN(percentage)) discount = Math.round(basePrice * (percentage / 100));
-                } else if (label.toLowerCase().includes('rm')) {
-                    const amount = parseInt(label.replace(/\D/g, ''));
-                    if (!isNaN(amount)) discount = amount * 100;
-                }
-            } else if (selectedVoucher) {
-                if (selectedVoucher.title.includes('%')) {
-                    const percentage = parseInt(selectedVoucher.title);
-                    const gross = basePrice + rankSurcharge;
-                    discount = Math.round(gross * (percentage / 100));
-                } else {
-                    discount = selectedVoucher.discountCents;
-                }
-            }
-            let taxableAmount = (basePrice + rankSurcharge) - discount;
-            taxableAmount = Math.max(0, taxableAmount);
-            const sstCents = Math.round(taxableAmount * 0.08);
-            const totalBeforeRounding = taxableAmount + sstCents;
-            const amountRM = totalBeforeRounding / 100;
-            const roundedRM = (Math.round(amountRM * 20) / 20);
-            const finalTotalCents = Math.round(roundedRM * 100);
-            const roundingCents = finalTotalCents - totalBeforeRounding;
+            const {
+                basePrice,
+                rankSurcharge,
+                discount,
+                sstCents,
+                roundingCents,
+                finalTotalCents
+            } = priceCalculation;
 
             // Generate transaction reference
             const transactionRef = `SIM-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
@@ -1065,7 +1066,7 @@ export default function BookAppointment() {
                                     </View>
                                     <View style={{ alignItems: 'center' }}>
                                         <Text style={{ fontSize: 14, color: '#6b7280' }}>Amount</Text>
-                                        <Text style={{ fontSize: 32, fontWeight: '900', color: isDark ? colors.text900 : '#111827' }}>RM {(selectedService?.priceCents || 0) / 100}</Text>
+                                        <Text style={{ fontSize: 32, fontWeight: '900', color: isDark ? colors.text900 : '#111827' }}>RM {(priceCalculation.finalTotalCents / 100).toFixed(2)}</Text>
                                     </View>
                                     <View style={{ width: '100%' }}>
                                         <Text style={{ fontSize: 12, fontWeight: '700', color: '#6b7280', marginBottom: 8 }}>6-DIGIT PIN</Text>
@@ -1201,6 +1202,7 @@ const styles = StyleSheet.create({
     voucherItem: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     voucherItemActive: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
     voucherItemActiveRose: { borderColor: '#e11d48', backgroundColor: '#fff1f2' },
+    voucherCardActive: { borderColor: '#e11d48', backgroundColor: '#fff1f2' },
     voucherItemDisabled: { opacity: 0.5 },
     voucherTitle: { fontSize: 14, fontWeight: '700' },
     voucherDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 }

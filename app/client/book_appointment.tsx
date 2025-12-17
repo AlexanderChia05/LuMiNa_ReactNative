@@ -129,7 +129,8 @@ export default function BookAppointment() {
                     display: 'flex',
                     backgroundColor: isDark ? '#141414' : '#ffffff',
                     borderTopWidth: 0
-                }
+                },
+                tabBarActiveTintColor: colors.accent
             });
 
             // Return cleanup function to restore tab bar when leaving
@@ -174,8 +175,11 @@ export default function BookAppointment() {
                     right: 20,
                     height: 72,
                     borderRadius: 32,
-                    display: 'flex'
-                }
+                    display: 'flex',
+                    backgroundColor: isDark ? '#141414' : '#ffffff',
+                    borderTopWidth: 0
+                },
+                tabBarActiveTintColor: colors.accent
             });
         }
     }, [bookingStep, navigation]);

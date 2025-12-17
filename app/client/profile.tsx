@@ -263,12 +263,15 @@ export default function ClientProfile() {
                 <Button
                     variant="outline"
                     onPress={handleLogout}
-                    style={[styles.logoutButton, { borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#fecaca', backgroundColor: isDark ? 'transparent' : '#fff' }]}
-                    textStyle={styles.logoutText}
+                    style={[styles.logoutButton, {
+                        borderColor: isDark ? colors.accent : '#fecaca',
+                        backgroundColor: isDark ? 'rgba(212, 175, 55, 0.05)' : '#fff'
+                    }]}
+                    textStyle={[styles.logoutText, isDark && { color: colors.accent }]}
                 >
                     <View style={styles.logoutContent}>
-                        <LogOut size={16} color="#ef4444" />
-                        <Text style={styles.logoutText}>Log Out</Text>
+                        <LogOut size={16} color={isDark ? colors.accent : "#ef4444"} />
+                        <Text style={[styles.logoutText, isDark && { color: colors.accent }]}>Log Out</Text>
                     </View>
                 </Button>
             </ScrollView>

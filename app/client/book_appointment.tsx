@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -12,7 +12,7 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { supabase } from '@/services/supabase';
 import { Api } from '@/services/api';
 import { Service, Staff, Appointment, Promotion, Receipt, Reward, AppointmentStatus } from '@/types';
@@ -48,6 +48,7 @@ const EXTENDED_TIME_SLOTS = [
 
 export default function BookAppointment() {
     const router = useRouter();
+    const navigation = useNavigation();
     const { theme } = useTheme();
     const isDark = theme === 'dark';
     const colors = isDark ? Colors.dark : Colors.light;
@@ -96,6 +97,39 @@ export default function BookAppointment() {
     const [otp, setOtp] = useState('');
     const [payError, setPayError] = useState('');
     const [processing, setProcessing] = useState(false);
+
+    // Reset booking state and manage tab bar visibility
+    useFocusEffect(
+        useCallback(() => {
+            // Reset all booking state when screen is focused
+            setBookingStep('services');
+            setSelectedService(null);
+            setSelectedStaff(null);
+            setSelectedSlot(null);
+            setSelectedDateOffset(0);
+            setSelectedVoucher(null);
+            setSelectedPromotion(null);
+            setLatestReceipt(null);
+            setIsPaymentModalVisible(false);
+            setPayStep('method');
+            setCardForm({ number: '', expiry: '', cvc: '', name: '' });
+            setTngPin('');
+            setOtp('');
+            setPayError('');
+
+            // Show tab bar on services screen
+            navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+        }, [navigation])
+    );
+
+    // Hide tab bar when leaving services step
+    useEffect(() => {
+        if (bookingStep !== 'services') {
+            navigation.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+        } else {
+            navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+        }
+    }, [bookingStep, navigation]);
 
     useEffect(() => {
         loadData();
@@ -680,6 +714,10 @@ export default function BookAppointment() {
             const amountRM = totalBeforeRounding / 100;
             const roundedRM = (Math.round(amountRM * 20) / 20);
             const finalTotalCents = Math.round(roundedRM * 100);
+            const roundingCents = finalTotalCents - totalBeforeRounding;
+
+            // Generate transaction reference
+            const transactionRef = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
             // Call API
             const apptData: Partial<Appointment> = {
@@ -692,9 +730,15 @@ export default function BookAppointment() {
 
             if (!apptData.staffId && staffList.length > 0) apptData.staffId = staffList[0].id;
 
+            // Pass all receipt data to API for database storage
             const refId = await Api.createAppointment(apptData, finalTotalCents, selectedVoucher || undefined, {
-                payment_method: payStep === 'card' || payStep === 'otp' ? 'Credit Card' : "Touch 'n Go",
-                total_payable_cents: finalTotalCents
+                paymentMethod: payStep === 'card' || payStep === 'otp' ? 'card' : "Touch 'n Go",
+                sstCents: sstCents,
+                surchargeCents: rankSurcharge,
+                roundingCents: roundingCents,
+                transactionRef: transactionRef,
+                servicePriceCents: basePrice,
+                totalPayableCents: finalTotalCents
             });
 
             if (refId) {
@@ -708,12 +752,16 @@ export default function BookAppointment() {
                     date: new Date().toISOString(),
                     bookingDate: new Date().toISOString(),
                     appointmentDate: `${dateStr}T${selectedSlot}`,
-                    totalCents: basePrice + rankSurcharge, // Original Total
+                    servicePriceCents: basePrice, // Original service price
+                    surchargeCents: rankSurcharge, // Stylist surcharge
+                    totalCents: basePrice + rankSurcharge, // Total before discount/tax
                     depositCents: finalTotalCents,
                     balanceCents: 0,
                     sstCents: sstCents,
+                    roundingCents: roundingCents,
                     discountCents: discount,
-                    paymentMethod: payStep === 'card' || payStep === 'otp' ? 'Credit Card' : "Touch 'n Go",
+                    paymentMethod: payStep === 'card' || payStep === 'otp' ? 'card' : "Touch 'n Go",
+                    transactionRef: transactionRef,
                     status: 'paid',
                     refundCents: 0
                 };

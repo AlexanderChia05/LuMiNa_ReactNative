@@ -45,18 +45,21 @@ export const ReceiptCard = ({ receipt }: ReceiptCardProps) => {
                 <Text style={styles.sectionTitle}>Service Details</Text>
                 <View style={styles.row}>
                     <Text style={[styles.serviceName, { color: isDark ? colors.text900 : '#111827' }]}>{receipt.serviceName}</Text>
-                    <Text style={[styles.price, { color: isDark ? colors.text900 : '#111827' }]}>RM {(receipt.totalCents / 100).toFixed(2)}</Text>
+                    <Text style={[styles.price, { color: isDark ? colors.text900 : '#111827' }]}>RM {((receipt.servicePriceCents || receipt.totalCents) / 100).toFixed(2)}</Text>
                 </View>
                 <Text style={styles.stylist}>Stylist: {receipt.staffName}</Text>
 
                 {receipt.surchargeCents && receipt.surchargeCents > 0 ? (
-                    <Row label="Stylist Surcharge" value={`RM ${(receipt.surchargeCents / 100).toFixed(2)}`} isDark={isDark} colors={colors} />
+                    <View style={styles.row}>
+                        <Text style={styles.label}>Stylist Surcharge</Text>
+                        <Text style={[styles.value, { color: isDark ? colors.text900 : '#111827' }]}>RM {(receipt.surchargeCents / 100).toFixed(2)}</Text>
+                    </View>
                 ) : null}
 
                 <View style={[styles.divider, { backgroundColor: isDark ? colors.border : '#f3f4f6' }]} />
 
                 <View style={styles.summary}>
-                    <Row label="Subtotal" value={`RM ${(((receipt.totalCents + (receipt.surchargeCents || 0)) / 100)).toFixed(2)}`} bold isDark={isDark} colors={colors} />
+                    <Row label="Subtotal" value={`RM ${(((receipt.servicePriceCents || receipt.totalCents) + (receipt.surchargeCents || 0)) / 100).toFixed(2)}`} bold isDark={isDark} colors={colors} />
                     <Row label="SST (8%)" value={`RM ${(receipt.sstCents ? receipt.sstCents / 100 : 0).toFixed(2)}`} isDark={isDark} colors={colors} />
 
                     {receipt.discountCents > 0 && (

@@ -155,6 +155,7 @@ export interface Receipt {
   staffName: string;
   customerName?: string; // Added Client Name
   totalCents: number;
+  servicePriceCents?: number; // Original service price without surcharge
   discountCents: number;
   depositCents: number;
   balanceCents: number;

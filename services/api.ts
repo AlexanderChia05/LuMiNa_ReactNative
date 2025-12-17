@@ -626,18 +626,15 @@ export const Api = {
       service_price: pricePaid
     }]);
 
-    // Generate SIM transaction reference (matching React DOM format)
-    const simTransactionRef = receiptData?.transactionRef || `SIM-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-
     const { data: orderData } = await supabase.from('order_table').insert([{
       appointment_id: apptId,
-      payment_method: receiptData?.paymentMethod === "Touch 'n Go" ? 'tng' : 'card',
+      payment_method: receiptData?.paymentMethod === 'Touch \'n Go' ? 'tng' : 'card',
       sst_cents: receiptData?.sstCents || 0,
       rounding_cents: receiptData?.roundingCents || 0,
       surcharge_cents: receiptData?.surchargeCents || 0,
       total_payable_cents: pricePaid,
       status: 'paid',
-      transaction_ref: simTransactionRef
+      transaction_ref: receiptData?.transactionRef || null // Store Stripe/HitPay Ref
     }]).select().single();
 
     if (orderData && voucher) {

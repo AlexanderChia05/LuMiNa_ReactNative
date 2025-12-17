@@ -18,7 +18,18 @@ export const ReceiptCard = ({ receipt }: ReceiptCardProps) => {
         if (!dateStr) return 'N/A';
         try {
             const d = new Date(dateStr);
-            return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            const day = d.getDate();
+            const month = d.getMonth() + 1;
+            const year = d.getFullYear();
+
+            let hours = d.getHours();
+            const minutes = d.getMinutes();
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+
+            return `${day}/${month}/${year} ${hours}:${strMinutes} ${ampm}`;
         } catch (e) {
             return dateStr;
         }
@@ -38,7 +49,7 @@ export const ReceiptCard = ({ receipt }: ReceiptCardProps) => {
                 <Row label="Receipt No." value={receipt.id} valueStyle={styles.mono} isDark={isDark} colors={colors} />
                 <Row label="Booking Date" value={getFormattedDateTime(receipt.bookingDate)} isDark={isDark} colors={colors} />
                 <Row label="Appt Date" value={getFormattedDateTime(receipt.appointmentDate)} isDark={isDark} colors={colors} />
-                <Row label="Payment Method" value={receipt.paymentMethod} isDark={isDark} colors={colors} />
+                <Row label="Payment Method" value={receipt.paymentMethod === 'card' ? 'Credit Card' : receipt.paymentMethod === 'tng' ? "Touch 'n Go" : receipt.paymentMethod} isDark={isDark} colors={colors} />
 
                 <View style={[styles.divider, { backgroundColor: isDark ? colors.border : '#f3f4f6' }]} />
 

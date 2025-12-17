@@ -759,6 +759,9 @@ export default function BookAppointment() {
             const finalTotalCents = Math.round(roundedRM * 100);
             const roundingCents = finalTotalCents - totalBeforeRounding;
 
+            // Generate transaction reference
+            const transactionRef = `SIM-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
             // Call API
             const apptData: Partial<Appointment> = {
                 userId: user.id,
@@ -771,12 +774,12 @@ export default function BookAppointment() {
             if (!apptData.staffId && staffList.length > 0) apptData.staffId = staffList[0].id;
 
             // Pass all receipt data to API for database storage
-            // API generates SIM-XXXXXX format transaction_ref
             const result = await Api.createAppointment(apptData, finalTotalCents, selectedVoucher || undefined, {
                 paymentMethod: payStep === 'card' || payStep === 'otp' ? 'card' : "Touch 'n Go",
                 sstCents: sstCents,
                 surchargeCents: rankSurcharge,
                 roundingCents: roundingCents,
+                transactionRef: transactionRef,
                 servicePriceCents: basePrice,
                 totalPayableCents: finalTotalCents
             });
@@ -802,6 +805,7 @@ export default function BookAppointment() {
                     roundingCents: roundingCents,
                     discountCents: discount,
                     paymentMethod: payStep === 'card' || payStep === 'otp' ? 'Credit Card' : "Touch 'n Go",
+                    transactionRef: transactionRef,
                     status: 'paid',
                     refundCents: 0
                 };

@@ -8,8 +8,8 @@ Before you start, ensure you have the following installed:
 
 1.  **Node.js (LTS version)**: [Download Node.js](https://nodejs.org/)
 2.  **Expo Go App**: Install on your physical device.
-    *   [iOS (App Store)](https://apps.apple.com/us/app/expo-go/id982107779)
-    *   [Android (Play Store)](https://play.google.com/store/apps/details?id=host.exp.exponent)
+    *   [iOS](https://apps.apple.com/us/app/expo-go/id982107779)
+    *   [Android](https://share.google/AfbraptvJENNiWv3w )
 3.  **Git**: [Download Git](https://git-scm.com/)
 
 ---

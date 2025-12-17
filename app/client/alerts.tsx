@@ -187,7 +187,7 @@ export default function ClientAlerts() {
                             style={[
                                 styles.tab,
                                 activeTab === tab.id ? styles.tabActive : styles.tabInactive,
-                                activeTab === tab.id ? { backgroundColor: Colors.light.rose500 } : { backgroundColor: isDark ? colors.bgCard : '#f3f4f6' }
+                                activeTab === tab.id ? { backgroundColor: colors.accent } : { backgroundColor: isDark ? colors.bgCard : '#f3f4f6' }
                             ]}
                             onPress={() => setActiveTab(tab.id)}
                         >
@@ -201,7 +201,7 @@ export default function ClientAlerts() {
             </View>
 
             <ScrollView contentContainerStyle={styles.list}>
-                {loading ? <ActivityIndicator color={Colors.light.rose500} /> : (
+                {loading ? <ActivityIndicator color={colors.accent} /> : (
                     filteredNotifications.length === 0 ? (
                         <View style={{ alignItems: 'center', paddingTop: 60 }}>
                             <Bell size={48} color="#d1d5db" />
@@ -214,7 +214,7 @@ export default function ClientAlerts() {
                                 style={[
                                     styles.card,
                                     { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' },
-                                    !notif.read && { borderColor: Colors.light.rose500 }
+                                    !notif.read && { borderColor: colors.accent }
                                 ]}
                                 onPress={() => handleNotificationClick(notif)}
                             >
@@ -231,8 +231,8 @@ export default function ClientAlerts() {
                                     {/* Actions */}
                                     {(notif.type === 'booking' || notif.type === 'receipt') && (
                                         <TouchableOpacity onPress={() => handleNotificationClick(notif)} style={styles.actionLink}>
-                                            <Text style={styles.actionText}>View Receipt</Text>
-                                            <ChevronRight size={14} color={Colors.light.rose500} />
+                                            <Text style={[styles.actionText, { color: colors.accent }]}>View Receipt</Text>
+                                            <ChevronRight size={14} color={colors.accent} />
                                         </TouchableOpacity>
                                     )}
                                     {notif.type === 'review' && (
@@ -292,7 +292,7 @@ export default function ClientAlerts() {
                             <Text style={{ fontSize: 14, color: isDark ? '#fff' : '#111827' }}>"{selectedReviewReply?.reply}"</Text>
                         </View>
 
-                        <Button onPress={() => setReplyModalVisible(false)} style={{ width: '100%', backgroundColor: Colors.light.rose500 }}>
+                        <Button onPress={() => setReplyModalVisible(false)} style={{ width: '100%', backgroundColor: colors.accent }}>
                             Close
                         </Button>
                     </View>
@@ -321,7 +321,7 @@ export default function ClientAlerts() {
 
                         <View style={{ backgroundColor: isDark ? '#374151' : '#f3f4f6', padding: 16, borderRadius: 16, marginBottom: 24 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                                <Calendar size={18} color={Colors.light.rose500} />
+                                <Calendar size={18} color={colors.accent} />
                                 <Text style={{ fontWeight: '700', color: isDark ? '#fff' : '#111827' }}>Tomorrow, 10:00 AM</Text>
                             </View>
                             <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginLeft: 30 }}>Please arrive 10 minutes early.</Text>

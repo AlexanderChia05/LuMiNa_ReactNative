@@ -562,6 +562,7 @@ export default function BookAppointment() {
 
                     {/* Promotions */}
                     {promotions.map(p => {
+                        if (!p) return null;
                         const isSelected = selectedPromotion?.id === p.id;
                         return (
                             <TouchableOpacity
@@ -591,6 +592,7 @@ export default function BookAppointment() {
 
                     {/* Vouchers */}
                     {vouchers.map(v => {
+                        if (!v) return null;
                         const isSelected = selectedVoucher?.id === v.id;
                         const base = selectedService?.priceCents || 0;
                         const surcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
@@ -754,6 +756,7 @@ export default function BookAppointment() {
 
         } else if (payStep === 'tng') {
             if (tngPin.length !== 6) { setPayError("PIN must be 6 digits"); return; }
+            if (!user) { setPayError("User not authenticated"); return; }
             // Verify PIN logic mocked
             setProcessing(true);
             const isValid = await Api.verifyTransactionPin(user.id, tngPin);

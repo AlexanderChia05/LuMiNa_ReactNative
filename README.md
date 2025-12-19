@@ -8,8 +8,7 @@ Before you start, ensure you have the following installed:
 
 1.  **Node.js (LTS version)**: [Download Node.js](https://nodejs.org/)
 2.  **Expo Go App**: Install on your physical device.
-    *   [iOS (App Store)](https://apps.apple.com/us/app/expo-go/id982107779)
-    *   [Android (Play Store)](https://play.google.com/store/apps/details?id=host.exp.exponent)
+    *   [Android](https://expo.dev/go?sdkVersion=51&platform=android&device=true)
 3.  **Git**: [Download Git](https://git-scm.com/)
 
 ---
@@ -73,7 +72,7 @@ If the app gets stuck on "Downloading bundle" or fails to connect:
 
 ### "Cannot read property 'id' of null"
 This usually happens if the user session is lost or not fully loaded.
-*   **Fix**: Close the app completely and reopen it. Ensure you log in again if prompted.
+*   **Fix**: Close the app completely and reopen it.
 
 ### Styling Issues (Dark Mode)
 If colors look incorrect, try toggling the system theme or reloading the app (`r`) to force a re-render of the theme context.

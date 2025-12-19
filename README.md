@@ -77,5 +77,3 @@ This usually happens if the user session is lost or not fully loaded.
 ### Styling Issues (Dark Mode)
 If colors look incorrect, try toggling the system theme or reloading the app (`r`) to force a re-render of the theme context.
 
----
-

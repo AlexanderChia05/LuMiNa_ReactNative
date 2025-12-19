@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { supabase } from '../services/supabase';
+import { AuthService } from '../services/auth';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 export default function Index() {
@@ -11,7 +12,7 @@ export default function Index() {
     }, []);
 
     const checkAuth = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await AuthService.getSession();
 
         if (!session) {
             router.replace('/auth/login');

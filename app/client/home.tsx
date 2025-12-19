@@ -199,7 +199,7 @@ export default function ClientHome() {
                 {/* Upcoming Appointments */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Upcoming</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.text900 }]}>Upcoming</Text>
                         <TouchableOpacity onPress={() => router.push('/client/bookings')}>
                             <Text style={[styles.seeAllText, { color: colors.accent }]}>See All</Text>
                         </TouchableOpacity>
@@ -235,7 +235,7 @@ export default function ClientHome() {
 
                 {/* Special Offers (Promotions) */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Special Offers</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text900 }]}>Special Offers</Text>
                     {promotions.length > 0 ? (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.promoScroll}>
                             {promotions.map((promo) => (
@@ -266,7 +266,7 @@ export default function ClientHome() {
 
                 {/* Popular Services */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Popular Services</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text900 }]}>Popular Services</Text>
                     {popularServices.length > 0 ? (
                         <View style={{ gap: 12 }}>
                             {popularServices.map((service) => (

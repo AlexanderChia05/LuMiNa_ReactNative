@@ -79,5 +79,3 @@ If colors look incorrect, try toggling the system theme or reloading the app (`r
 
 ---
 
-## 📄 License
-This project is for educational purposes.

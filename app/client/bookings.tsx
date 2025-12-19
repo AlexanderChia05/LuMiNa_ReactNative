@@ -36,6 +36,17 @@ const CustomCalendar = ({ selectedDate, onSelectDate, isDark, colors }: any) => 
 
     const renderDays = () => {
         const slots = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Min date: Today + 5 days
+        const minDate = new Date(today);
+        minDate.setDate(today.getDate() + 5);
+
+        // Max date: Min date + 3 months
+        const maxDate = new Date(minDate);
+        maxDate.setMonth(maxDate.getMonth() + 3);
+
         for (let i = 0; i < firstDay; i++) {
             slots.push(<View key={`empty-${i}`} style={styles.calendarDay} />);
         }
@@ -43,7 +54,7 @@ const CustomCalendar = ({ selectedDate, onSelectDate, isDark, colors }: any) => 
             const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
             const dateStr = date.toLocaleDateString('en-CA');
             const isSelected = selectedDate === dateStr;
-            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+            const isDisabled = date < minDate || date > maxDate;
 
             slots.push(
                 <TouchableOpacity
@@ -51,9 +62,9 @@ const CustomCalendar = ({ selectedDate, onSelectDate, isDark, colors }: any) => 
                     style={[
                         styles.calendarDay,
                         isSelected && { backgroundColor: colors.rose500 },
-                        isPast && { opacity: 0.3 }
+                        isDisabled && { opacity: 0.3 }
                     ]}
-                    disabled={isPast}
+                    disabled={isDisabled}
                     onPress={() => onSelectDate(dateStr)}
                 >
                     <Text style={[

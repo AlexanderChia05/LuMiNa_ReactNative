@@ -398,9 +398,16 @@ export default function BookAppointment() {
     const isDateDisabled = (date: Date) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+
+        // Min date: Today + 5 days
         const minDate = new Date(today);
         minDate.setDate(today.getDate() + 5);
-        return date < minDate;
+
+        // Max date: Min date + 3 months
+        const maxDate = new Date(minDate);
+        maxDate.setMonth(maxDate.getMonth() + 3);
+
+        return date < minDate || date > maxDate;
     };
 
     const handleDateClick = (date: Date) => {

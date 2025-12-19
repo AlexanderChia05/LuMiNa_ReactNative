@@ -293,32 +293,76 @@ export default function BookAppointment() {
         if (vouchersData) setVouchers(vouchersData);
     };
 
-    // --- PROMOTION LOGIC ---
+    // --- PROMOTION / VOUCHER AUTO-SELECTION LOGIC ---
     useEffect(() => {
         if (!selectedService) return;
 
-        const checkPromotions = () => {
-            const now = new Date();
-            const validPromos = promotions.filter(p => {
-                if (!p.active) return false;
-                // Filter by service if applicableServices exists (mock logic)
-                // if (p.applicableServices && !p.applicableServices.includes(selectedService.id)) return false; 
+        const now = new Date();
+        const basePrice = selectedService.priceCents;
+        const rankSurcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
+        const orderTotal = basePrice + rankSurcharge;
 
-                const start = new Date(p.startDate);
-                const end = new Date(p.endDate);
-                end.setHours(23, 59, 59, 999);
-                return now >= start && now <= end;
-            });
+        // Get valid promotions
+        const validPromos = promotions.filter(p => {
+            if (!p.active) return false;
+            if (p.applicableServices && p.applicableServices.length > 0 && !p.applicableServices.includes(selectedService.id)) return false;
+            const start = new Date(p.startDate);
+            const end = new Date(p.endDate);
+            end.setHours(23, 59, 59, 999);
+            return now >= start && now <= end;
+        });
 
-            if (validPromos.length > 0) {
-                setSelectedPromotion(validPromos[0]);
+        // Get valid vouchers (not disabled)
+        const validVouchers = vouchers.filter(v => {
+            if (!v) return false;
+            const isDisabled = !v.title.includes('%') && v.discountCents >= orderTotal;
+            return !isDisabled;
+        });
+
+        // Calculate discount for each promo
+        const promoDiscounts = validPromos.map(p => {
+            const label = p.discount;
+            let discount = 0;
+            if (label.includes('%')) {
+                const pct = parseInt(label.replace(/\D/g, ''));
+                if (!isNaN(pct)) discount = Math.round(basePrice * (pct / 100));
+            } else if (label.toLowerCase().includes('rm')) {
+                const amt = parseInt(label.replace(/\D/g, ''));
+                if (!isNaN(amt)) discount = amt * 100;
+            }
+            return { type: 'promo' as const, item: p, discount };
+        });
+
+        // Calculate discount for each voucher
+        const voucherDiscounts = validVouchers.map(v => {
+            let discount = 0;
+            if (v.title.includes('%')) {
+                const pct = parseInt(v.title);
+                discount = Math.round(orderTotal * (pct / 100));
+            } else {
+                discount = v.discountCents;
+            }
+            return { type: 'voucher' as const, item: v, discount };
+        });
+
+        // Combine and find best
+        const allOffers = [...promoDiscounts, ...voucherDiscounts];
+        allOffers.sort((a, b) => b.discount - a.discount);
+
+        if (allOffers.length > 0) {
+            const best = allOffers[0];
+            if (best.type === 'promo') {
+                setSelectedPromotion(best.item as Promotion);
                 setSelectedVoucher(null);
             } else {
+                setSelectedVoucher(best.item as Reward);
                 setSelectedPromotion(null);
             }
-        };
-        checkPromotions();
-    }, [selectedService, promotions]);
+        } else {
+            setSelectedPromotion(null);
+            setSelectedVoucher(null);
+        }
+    }, [selectedService, selectedStaff, promotions, vouchers]);
 
     // Re-validate voucher
     useEffect(() => {
@@ -593,10 +637,22 @@ export default function BookAppointment() {
                 <View style={{ gap: 8 }}>
                     <Text style={[styles.sectionLabel, { color: isDark ? colors.text900 : '#111827' }]}>Offers & Vouchers</Text>
 
-                    {/* Promotions */}
-                    {promotions.map(p => {
+                    {/* Promotions - Only show applicable ones */}
+                    {promotions.filter(p => {
+                        if (!p || !p.active) return false;
+                        const now = new Date();
+                        const start = new Date(p.startDate);
+                        const end = new Date(p.endDate);
+                        end.setHours(23, 59, 59, 999);
+                        if (now < start || now > end) return false;
+                        // Filter by applicable services
+                        if (p.applicableServices && p.applicableServices.length > 0 && selectedService && !p.applicableServices.includes(selectedService.id)) return false;
+                        return true;
+                    }).map(p => {
                         if (!p) return null;
                         const isSelected = selectedPromotion?.id === p.id;
+                        const startDateStr = new Date(p.startDate).toLocaleDateString('en-GB');
+                        const endDateStr = new Date(p.endDate).toLocaleDateString('en-GB');
                         return (
                             <TouchableOpacity
                                 key={p.id}
@@ -616,50 +672,63 @@ export default function BookAppointment() {
                                         <Text style={[styles.offerTitle, !isSelected && { color: isDark ? colors.text900 : '#111827' }]}>{p.title}</Text>
                                     </View>
                                     <Text style={[styles.offerDesc, !isSelected && { color: '#6b7280' }]}>{p.discount}</Text>
-                                    <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }]}>Special Offer</Text>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }]}>Special Offer</Text>
+                                        <Text style={{ fontSize: 10, color: isSelected ? '#15803d' : '#9ca3af' }}>{startDateStr} - {endDateStr}</Text>
+                                    </View>
                                 </View>
                                 {isSelected ? <CheckCircle size={20} color="#15803d" /> : <View style={{ width: 20 }} />}
                             </TouchableOpacity>
                         );
                     })}
 
-                    {/* Vouchers */}
-                    {vouchers.map(v => {
-                        if (!v) return null;
-                        const isSelected = selectedVoucher?.id === v.id;
-                        const base = selectedService?.priceCents || 0;
-                        const surcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
-                        const total = base + surcharge;
-                        const isDisabled = !v.title.includes('%') && v.discountCents >= total;
-
-                        return (
-                            <TouchableOpacity
-                                key={v.id}
-                                disabled={isDisabled}
-                                style={[
-                                    styles.offerCard,
-                                    { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' },
-                                    isSelected && styles.voucherCardActive,
-                                    isDisabled && { opacity: 0.5 }
-                                ]}
-                                onPress={() => {
-                                    if (isSelected) setSelectedVoucher(null);
-                                    else { setSelectedVoucher(v); setSelectedPromotion(null); }
-                                }}
-                            >
-                                <View style={{ flex: 1 }}>
-                                    <View style={styles.offerRow}>
-                                        <Gift size={16} color={isSelected ? Colors.light.rose500 : '#9ca3af'} />
-                                        <Text style={[styles.offerTitle, !isSelected && { color: isDark ? colors.text900 : '#111827' }, isSelected && { color: Colors.light.rose600 }]}>{v.title}</Text>
+                    {/* Vouchers - Sorted by nearest expiry, hidden if inapplicable */}
+                    {vouchers
+                        .filter(v => {
+                            if (!v) return false;
+                            const base = selectedService?.priceCents || 0;
+                            const surcharge = selectedStaff ? getRankSurcharge(selectedStaff.rank) : 0;
+                            const total = base + surcharge;
+                            const isDisabled = !v.title.includes('%') && v.discountCents >= total;
+                            return !isDisabled; // Hide inapplicable vouchers
+                        })
+                        .sort((a, b) => {
+                            // Sort by nearest expiry date first using raw ISO date
+                            const dateA = a.expiryDateRaw ? new Date(a.expiryDateRaw).getTime() : Infinity;
+                            const dateB = b.expiryDateRaw ? new Date(b.expiryDateRaw).getTime() : Infinity;
+                            return dateA - dateB;
+                        })
+                        .map(v => {
+                            const isSelected = selectedVoucher?.id === v.id;
+                            const expiryStr = v.expiryDate || 'No Expiry';
+                            return (
+                                <TouchableOpacity
+                                    key={v.id}
+                                    style={[
+                                        styles.offerCard,
+                                        { backgroundColor: isDark ? colors.bgCard : '#fff', borderColor: isDark ? colors.border : '#e5e7eb' },
+                                        isSelected && styles.voucherCardActive
+                                    ]}
+                                    onPress={() => {
+                                        if (isSelected) setSelectedVoucher(null);
+                                        else { setSelectedVoucher(v); setSelectedPromotion(null); }
+                                    }}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.offerRow}>
+                                            <Gift size={16} color={isSelected ? Colors.light.rose500 : '#9ca3af'} />
+                                            <Text style={[styles.offerTitle, !isSelected && { color: isDark ? colors.text900 : '#111827' }, isSelected && { color: Colors.light.rose600 }]}>{v.title}</Text>
+                                        </View>
+                                        <Text style={[styles.offerDesc, !isSelected && { color: '#6b7280' }, isSelected && { color: Colors.light.rose500 }]}>{v.description}</Text>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }, isSelected && { color: Colors.light.rose400 }]}>My Voucher</Text>
+                                            <Text style={{ fontSize: 10, color: isSelected ? Colors.light.rose400 : '#9ca3af' }}>Exp: {expiryStr}</Text>
+                                        </View>
                                     </View>
-                                    <Text style={[styles.offerDesc, !isSelected && { color: '#6b7280' }, isSelected && { color: Colors.light.rose500 }]}>{v.description}</Text>
-                                    <Text style={[styles.offerType, !isSelected && { color: '#9ca3af' }, isSelected && { color: Colors.light.rose400 }]}>My Voucher</Text>
-                                    {isDisabled && <Text style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>Order value too low.</Text>}
-                                </View>
-                                {isSelected ? <CheckCircle size={20} color={Colors.light.rose500} /> : <View style={{ width: 20 }} />}
-                            </TouchableOpacity>
-                        );
-                    })}
+                                    {isSelected ? <CheckCircle size={20} color={Colors.light.rose500} /> : <View style={{ width: 20 }} />}
+                                </TouchableOpacity>
+                            );
+                        })}
                 </View>
 
                 {/* Billing By Line */}

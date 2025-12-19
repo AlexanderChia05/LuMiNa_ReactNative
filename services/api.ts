@@ -83,7 +83,8 @@ const mapReward = (data: any): Reward => ({
   cost: 0,
   discountCents: data.discount_type === 'percentage' ? data.discount_cents : data.discount_cents,
   imageUrl: '',
-  expiryDate: data.expiry_date ? new Date(data.expiry_date).toLocaleDateString() : 'No Expiry',
+  expiryDate: data.expiry_date ? new Date(data.expiry_date).toLocaleDateString('en-GB') : undefined,
+  expiryDateRaw: data.expiry_date || undefined,
   serialNumber: data.serial_number || 'N/A'
 });
 

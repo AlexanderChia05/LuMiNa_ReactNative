@@ -133,7 +133,8 @@ export interface Reward {
   description: string;
   imageUrl: string;
   discountCents: number; // Value to deduct from service price
-  expiryDate?: string; // For claimed vouchers
+  expiryDate?: string; // For display (formatted DD/MM/YYYY)
+  expiryDateRaw?: string; // For sorting (ISO format)
   serialNumber?: string; // Voucher serial number
   type?: 'voucher' | 'product' | 'service'; // Added
   value?: number; // Added
